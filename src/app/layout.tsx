@@ -13,13 +13,23 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className="min-h-screen">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-            <Link href="/" className="text-xl font-bold text-brand-600">
-              🔧 WYNNS
+        <header className="sticky top-0 z-10 border-b border-brand-700 bg-brand-600 text-white shadow-sm">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-xl shadow">
+                🦁
+              </span>
+              <span className="flex flex-col leading-none">
+                <span className="text-xl font-extrabold tracking-tight">
+                  WYNNS
+                </span>
+                <span className="mt-1 text-[10px] font-medium tracking-[0.2em] text-brand-100">
+                  威力狮 · เครื่องมือช่าง
+                </span>
+              </span>
             </Link>
-            <nav className="flex gap-6 text-sm font-medium text-gray-600">
-              <Link href="/" className="hover:text-brand-600">
+            <nav className="flex gap-6 text-sm font-medium text-brand-50">
+              <Link href="/" className="transition hover:text-white">
                 ค้นหาราคา
               </Link>
             </nav>
@@ -27,7 +37,7 @@ export default function RootLayout({
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
         <footer className="border-t border-gray-200 py-8 text-center text-sm text-gray-400">
-          © {new Date().getFullYear()} Catalog. สร้างด้วย Next.js
+          © {new Date().getFullYear()} WYNNS (威力狮) · ระบบค้นหาราคาสินค้า
         </footer>
       </body>
     </html>

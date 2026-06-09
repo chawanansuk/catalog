@@ -9,12 +9,13 @@ export default {
   theme: {
     extend: {
       colors: {
+        // โทนสีแบรนด์ WYNNS (威力狮) — แดงสิงโต
         brand: {
-          50: "#eef6ff",
-          100: "#d9eaff",
-          500: "#2f7fff",
-          600: "#1f63e0",
-          700: "#1a4fb3",
+          50: "#fdf3f2",
+          100: "#fbe0dd",
+          500: "#e2231a",
+          600: "#c81a12",
+          700: "#a3140e",
         },
       },
     },

@@ -51,19 +51,14 @@ function CostRow({
   cost: number | null | undefined;
   hasCost: boolean;
 }) {
-  if (!hasCost) return null;
+  // คนทั่วไป (ยังไม่ปลดล็อก) จะไม่เห็นบรรทัดราคาทุนเลย
+  if (!unlocked || !hasCost) return null;
   return (
     <div className="flex items-center justify-between rounded-lg bg-brand-50 px-3 py-2">
       <span className="text-sm text-gray-600">ราคาทุน</span>
-      {unlocked ? (
-        <span className="font-semibold text-brand-700">
-          {cost == null ? "…" : formatBaht(cost)}
-        </span>
-      ) : (
-        <span className="text-sm font-medium text-gray-400">
-          🔒 เฉพาะผู้บริหาร
-        </span>
-      )}
+      <span className="font-semibold text-brand-700">
+        {cost == null ? "…" : formatBaht(cost)}
+      </span>
     </div>
   );
 }

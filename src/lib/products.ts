@@ -13,7 +13,9 @@ export type WynnsProduct = {
   priceIncVat?: number | null;
   /** ราคาส่งออก (บาท) */
   priceExport?: number | null;
-  /** ราคาทุน */
+  /** ราคาทุน (เข้ารหัสไว้ — base64 ของ iv|ciphertext|tag; ถอดได้เฉพาะผู้มีรหัสผ่าน) */
+  costEnc?: string | null;
+  /** ราคาทุนที่ถอดรหัสแล้ว (เติมตอน runtime หลังผู้บริหารปลดล็อก เท่านั้น) */
   cost?: number | null;
   /** ขายส่งพิเศษ (ราคาขายพิเศษ) */
   wholesaleSpecial?: number | null;

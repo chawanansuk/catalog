@@ -61,8 +61,6 @@ function ProductResult({ product }: { product: WynnsProduct }) {
         <PriceRow label="ขายส่งพิเศษ" value={product.wholesaleSpecial} />
         <PriceRow label="ขายส่ง" value={product.wholesale} />
         <PriceRow label="ราคาขายปลีก" value={product.retail} />
-        <PriceRow label="ราคารวมภาษี" value={product.priceIncVat} />
-        <PriceRow label="ราคาส่งออก" value={product.priceExport} />
       </div>
     </div>
   );

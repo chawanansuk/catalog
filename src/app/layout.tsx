@@ -13,23 +13,23 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className="min-h-screen">
-        <header className="sticky top-0 z-10 border-b border-brand-700 bg-brand-600 text-white shadow-sm">
+        <header className="sticky top-0 z-10 border-b-4 border-brand-600 bg-white shadow-sm">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
             <Link href="/" className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-xl shadow">
+              <span className="flex h-9 w-12 items-center justify-center rounded-full bg-lion-500 text-lg shadow-sm">
                 🦁
               </span>
               <span className="flex flex-col leading-none">
-                <span className="text-xl font-extrabold tracking-tight">
-                  WYNNS
+                <span className="text-2xl font-extrabold italic tracking-tight text-brand-600">
+                  WYNN&apos;S
                 </span>
-                <span className="mt-1 text-[10px] font-medium tracking-[0.2em] text-brand-100">
-                  威力狮 · เครื่องมือช่าง
+                <span className="mt-0.5 text-[9px] font-semibold tracking-[0.25em] text-gray-400">
+                  WYNNS TOOLS · 威力狮
                 </span>
               </span>
             </Link>
-            <nav className="flex gap-6 text-sm font-medium text-brand-50">
-              <Link href="/" className="transition hover:text-white">
+            <nav className="flex gap-6 text-sm font-medium text-brand-700">
+              <Link href="/" className="transition hover:text-brand-600">
                 ค้นหาราคา
               </Link>
             </nav>

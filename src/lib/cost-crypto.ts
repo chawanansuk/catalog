@@ -26,7 +26,10 @@ function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
 
 export async function loadCostMeta(): Promise<CostCryptoMeta> {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const res = await fetch(`${base}/cost-crypto.json`);
+  const v = process.env.NEXT_PUBLIC_DATA_VERSION ?? "";
+  const res = await fetch(`${base}/cost-crypto.json?v=${v}`, {
+    cache: "no-store",
+  });
   return res.json();
 }
 

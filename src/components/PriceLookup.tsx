@@ -150,7 +150,7 @@ function ExecUnlock({
         onClick={() => setOpen(true)}
         className="text-sm font-medium text-gray-400 hover:text-brand-600"
       >
-        🔒 สำหรับผู้บริหาร — ปลดล็อกดูราคาทุน
+        🔒 สำหรับผู้บริหาร
       </button>
     );
   }
@@ -223,7 +223,8 @@ export function PriceLookup() {
   // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า แล้วค้นหาในเบราว์เซอร์ทั้งหมด (ไม่ต้องมีเซิร์ฟเวอร์)
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-    fetch(`${base}/wynns.json`)
+    const v = process.env.NEXT_PUBLIC_DATA_VERSION ?? "";
+    fetch(`${base}/wynns.json?v=${v}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data: WynnsProduct[]) => {
         setAllProducts(data);

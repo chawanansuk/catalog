@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
+    // เวอร์ชันข้อมูล (เปลี่ยนทุก build) ใช้ต่อท้าย URL กัน cache ของไฟล์ json
+    NEXT_PUBLIC_DATA_VERSION: String(Date.now()),
   },
 };
 

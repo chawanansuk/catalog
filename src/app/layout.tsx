@@ -13,23 +13,22 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className="min-h-screen">
-        <header className="sticky top-0 z-10 border-b-4 border-brand-600 bg-white shadow-sm">
+        <header className="sticky top-0 z-10 bg-brand-600 shadow-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-            <Link href="/" className="flex items-center gap-2.5">
-              <span className="flex h-9 w-12 items-center justify-center rounded-full bg-lion-500 text-lg shadow-sm">
-                🦁
-              </span>
+            <Link href="/" className="flex items-center gap-3">
               <span className="flex flex-col leading-none">
-                <span className="text-2xl font-extrabold italic tracking-tight text-brand-600">
-                  WYNN&apos;S
+                <span className="flex items-center text-3xl font-black italic tracking-tighter text-white">
+                  WY
+                  <span className="mx-[1px] inline-block h-0 w-0 -skew-x-12 border-y-[11px] border-l-[14px] border-y-transparent border-l-accent-500 align-middle" />
+                  NN&apos;S
                 </span>
-                <span className="mt-0.5 text-[9px] font-semibold tracking-[0.25em] text-gray-400">
+                <span className="mt-1 text-[9px] font-semibold tracking-[0.3em] text-brand-100">
                   WYNNS TOOLS · 威力狮
                 </span>
               </span>
             </Link>
-            <nav className="flex gap-6 text-sm font-medium text-brand-700">
-              <Link href="/" className="transition hover:text-brand-600">
+            <nav className="flex gap-6 text-sm font-medium text-brand-100">
+              <Link href="/" className="transition hover:text-white">
                 ค้นหาราคา
               </Link>
             </nav>

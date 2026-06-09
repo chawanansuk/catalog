@@ -1,16 +1,15 @@
-# 🛍️ Catalog
+# 🔧 WYNNS — ค้นหาราคาสินค้า
 
-เว็บแอปแคตตาล็อกสินค้า สร้างด้วย **Next.js 16 (App Router) + TypeScript + Tailwind CSS**
-พร้อมเลเยอร์ AI แบบ optional ที่เชื่อมต่อ **Typhoon** (Thai LLM โดย SCB 10X) ไว้รองรับ
+เว็บแอปค้นหาราคาสินค้า WYNNS ด้วยรหัสสินค้า สร้างด้วย **Next.js 16 + TypeScript + Tailwind CSS**
+ทำงานเป็น **static site** (ค้นหาทั้งหมดในเบราว์เซอร์ ไม่ต้องมีเซิร์ฟเวอร์) จึงโฮสต์ฟรีได้ทุกที่
 
 ## ฟีเจอร์
 
-- 📦 หน้ารายการสินค้าแบบ grid
-- 🔍 ค้นหาสินค้า (ชื่อ / คำอธิบาย / แท็ก)
-- 🏷️ กรองตามหมวดหมู่
-- 📄 หน้ารายละเอียดสินค้า (pre-render เป็น static)
-- 🇹🇭 รองรับภาษาไทยเต็มรูปแบบ
-- 🤖 เลเยอร์ AI เผื่อ Typhoon (เปิดใช้เมื่อพร้อม — ดูด้านล่าง)
+- 🔤 ค้นด้วยรหัสสินค้า **ไม่สนพิมพ์เล็ก/ใหญ่หรือเว้นวรรค** — `wsb230b`, `WSB230B`, `wsb 230b` เจอเหมือนกัน
+- 🔍 ค้นด้วยชื่อสินค้าภาษาไทยก็ได้
+- 📊 จัดอันดับผล: ตรงเป๊ะ → ขึ้นต้นด้วย → มีคำนี้ → ชื่อตรง
+- 💰 แสดงราคาครบ: ราคาทุน (เน้นสี), ขายส่งพิเศษ, ขายส่ง, ราคาขายปลีก, ราคารวมภาษี, ราคาส่งออก
+- ⚡ ค้นหาแบบ real-time จากฐานข้อมูล 5,066 รายการ
 
 ## เริ่มต้นใช้งาน
 
@@ -26,46 +25,52 @@ npm run dev
 | คำสั่ง | คำอธิบาย |
 | --- | --- |
 | `npm run dev` | รัน dev server |
-| `npm run build` | build สำหรับ production |
-| `npm run start` | รัน production server |
-| `npm run lint` | ตรวจโค้ดด้วย ESLint |
+| `npm run build` | build เป็น static export (ผลอยู่ใน `out/`) |
+| `npm run start` | preview production build |
 
 ## โครงสร้างโปรเจค
 
 ```
+public/
+└── wynns.json              # ฐานข้อมูลสินค้า (โหลดฝั่ง browser)
 src/
 ├── app/
-│   ├── layout.tsx              # layout หลัก (header/footer)
-│   ├── page.tsx                # หน้าแรก — รายการสินค้า
-│   ├── globals.css             # Tailwind + base styles
-│   └── products/[id]/page.tsx  # หน้ารายละเอียดสินค้า
+│   ├── layout.tsx          # layout หลัก (header/footer)
+│   ├── page.tsx            # หน้าค้นหา
+│   └── globals.css         # Tailwind + base styles
 ├── components/
-│   ├── CatalogBrowser.tsx      # ค้นหา + กรองหมวดหมู่ (client)
-│   └── ProductCard.tsx         # การ์ดสินค้า
-├── data/
-│   └── products.ts             # ข้อมูลสินค้าตัวอย่าง + ชนิดข้อมูล
+│   └── PriceLookup.tsx     # กล่องค้นหา + แสดงผลราคา (client)
 └── lib/
-    ├── format.ts               # ฟอร์แมตราคา (บาท)
-    └── ai/typhoon.ts           # เลเยอร์เชื่อมต่อ Typhoon (optional)
+    ├── products.ts         # ชนิดข้อมูล + ฟังก์ชันค้นหา/จัดอันดับ
+    ├── format.ts           # ฟอร์แมตราคา (บาท)
+    └── ai/typhoon.ts        # เลเยอร์เชื่อมต่อ Typhoon (optional)
 ```
 
-## เปิดใช้งานฟีเจอร์ AI (Typhoon)
+## Deploy ขึ้น GitHub Pages (ฟรี)
 
-ฟีเจอร์ AI เป็น optional — แอปรันได้ปกติแม้ไม่ตั้งค่า เมื่อพร้อมใช้:
+โปรเจคตั้ง GitHub Actions ไว้แล้ว (`.github/workflows/deploy.yml`) — deploy อัตโนมัติเมื่อ push เข้า `main`
 
-1. สมัครและรับ API key ที่ [playground.opentyphoon.ai](https://playground.opentyphoon.ai/)
-2. คัดลอกไฟล์ตั้งค่า:
-   ```bash
-   cp .env.example .env.local
-   ```
-3. ใส่ค่า `TYPHOON_API_KEY` ใน `.env.local`
+ตั้งค่าครั้งเดียว:
 
-ฟังก์ชันพร้อมใช้ใน `src/lib/ai/typhoon.ts` เช่น `generateProductDescription()`
-สำหรับสร้างคำอธิบายสินค้าภาษาไทยอัตโนมัติ
+1. รวมโค้ดเข้า branch `main` (merge)
+2. ไปที่ repo → **Settings → Pages**
+3. ที่ **Source** เลือก **GitHub Actions**
+4. รอ workflow รันเสร็จ เว็บจะอยู่ที่ `https://<username>.github.io/<repo>/`
 
-## แนวทางพัฒนาต่อ
+> หมายเหตุ: workflow ตั้งค่า `BASE_PATH=/<ชื่อ repo>` ให้อัตโนมัติ เพราะ GitHub Pages
+> โฮสต์โปรเจคไว้ใต้ path ชื่อ repo
 
-- เชื่อมต่อฐานข้อมูลจริง (แทน `src/data/products.ts`)
-- เพิ่มตะกร้าสินค้า / ระบบสั่งซื้อ
-- เพิ่มฟีเจอร์ AI: ค้นหาแบบภาษาธรรมชาติ, แชตบอตผู้ช่วยช้อปปิ้ง
-- เพิ่มระบบ auth สำหรับผู้ดูแล
+### โฮสต์ที่อื่น
+
+เพราะเป็น static export (`out/`) จะนำไปวางบน **Vercel / Netlify / Cloudflare Pages**
+ก็ได้เช่นกัน — ถ้าโฮสต์ที่ root domain ไม่ต้องตั้ง `BASE_PATH`
+
+## อัปเดตข้อมูลราคา
+
+ข้อมูลทั้งหมดอยู่ใน `public/wynns.json` — ถ้ามีไฟล์ราคา (Excel) ใหม่
+สามารถ generate ไฟล์นี้ใหม่แล้ว commit ทับได้เลย
+
+## ฟีเจอร์ AI (Typhoon) — optional
+
+เผื่อไว้ที่ `src/lib/ai/typhoon.ts` สำหรับต่อยอด เช่น ค้นหาแบบภาษาธรรมชาติ
+หรือผู้ช่วยตอบคำถามภาษาไทย (ต้องมีเซิร์ฟเวอร์/serverless — ดู `.env.example`)

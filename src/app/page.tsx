@@ -1,5 +1,4 @@
 import { PriceLookup } from "@/components/PriceLookup";
-import { products } from "@/lib/products";
 
 export default function HomePage() {
   return (
@@ -8,9 +7,6 @@ export default function HomePage() {
         <h1 className="text-2xl font-bold sm:text-3xl">ค้นหาราคาสินค้า WYNNS</h1>
         <p className="mt-2 text-brand-50">
           พิมพ์รหัสสินค้าเพื่อดูราคาทุน ราคาขายส่ง และราคาขายพิเศษ ทันที
-        </p>
-        <p className="mt-1 text-sm text-brand-100">
-          ฐานข้อมูล {products.length.toLocaleString("th-TH")} รายการ
         </p>
       </section>
 

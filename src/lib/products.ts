@@ -1,5 +1,3 @@
-import rawData from "@/data/wynns.json";
-
 export type WynnsProduct = {
   /** รหัสรุ่น WYNNS เช่น WSB230B (ดึงจากชื่อสินค้า) */
   code: string | null;
@@ -27,8 +25,6 @@ export type WynnsProduct = {
   isNew: boolean;
 };
 
-export const products = rawData as WynnsProduct[];
-
 /** normalize สำหรับเทียบรหัส: ตัดช่องว่าง/ขีด/อักขระพิเศษ และทำเป็นตัวพิมพ์ใหญ่ */
 function normalizeCode(s: string): string {
   return s.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -41,7 +37,11 @@ type ScoredProduct = { product: WynnsProduct; score: number };
  * - รหัสตรงเป๊ะ > รหัสขึ้นต้นด้วย > รหัสมีคำนี้ > ชื่อมีคำนี้
  * - ไม่สนตัวพิมพ์เล็ก/ใหญ่ และเว้นวรรค (wsb230b = WSB230B = wsb 230b)
  */
-export function searchProducts(query: string, limit = 50): WynnsProduct[] {
+export function searchProducts(
+  query: string,
+  products: WynnsProduct[],
+  limit = 50
+): WynnsProduct[] {
   const q = query.trim();
   if (!q) return [];
 

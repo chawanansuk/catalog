@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { WynnsProduct } from "@/lib/products";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { searchProducts, type WynnsProduct } from "@/lib/products";
 import { formatBaht } from "@/lib/format";
 
 function PriceRow({
@@ -35,22 +35,20 @@ function PriceRow({
 function ProductResult({ product }: { product: WynnsProduct }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {product.code && (
-            <span className="rounded-md bg-brand-600 px-2 py-1 font-mono text-sm font-bold text-white">
-              {product.code}
-            </span>
-          )}
-          {product.isNew && (
-            <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-              สินค้าใหม่
-            </span>
-          )}
-          {product.unit && (
-            <span className="text-xs text-gray-400">/ {product.unit}</span>
-          )}
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {product.code && (
+          <span className="rounded-md bg-brand-600 px-2 py-1 font-mono text-sm font-bold text-white">
+            {product.code}
+          </span>
+        )}
+        {product.isNew && (
+          <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+            สินค้าใหม่
+          </span>
+        )}
+        {product.unit && (
+          <span className="text-xs text-gray-400">/ {product.unit}</span>
+        )}
       </div>
 
       <h3 className="mt-2 font-medium text-gray-900">{product.name}</h3>
@@ -71,41 +69,38 @@ function ProductResult({ product }: { product: WynnsProduct }) {
 }
 
 export function PriceLookup() {
+  const [allProducts, setAllProducts] = useState<WynnsProduct[]>([]);
+  const [dataReady, setDataReady] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<WynnsProduct[]>([]);
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [debounced, setDebounced] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า แล้วค้นหาในเบราว์เซอร์ทั้งหมด (ไม่ต้องมีเซิร์ฟเวอร์)
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    fetch(`${base}/wynns.json`)
+      .then((res) => res.json())
+      .then((data: WynnsProduct[]) => {
+        setAllProducts(data);
+        setDataReady(true);
+      })
+      .catch(() => setDataReady(true));
+  }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    const q = query.trim();
-    if (!q) {
-      setResults([]);
-      setCount(0);
-      setSearched(false);
-      return;
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        setResults(data.results);
-        setCount(data.count);
-        setSearched(true);
-      } finally {
-        setLoading(false);
-      }
-    }, 250);
-
+    debounceRef.current = setTimeout(() => setDebounced(query), 180);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [query]);
+
+  const results = useMemo(
+    () => searchProducts(debounced, allProducts),
+    [debounced, allProducts]
+  );
+
+  const searched = debounced.trim().length > 0;
 
   return (
     <div className="space-y-6">
@@ -115,20 +110,23 @@ export function PriceLookup() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
-          placeholder="พิมพ์รหัสสินค้า เช่น WSB230B หรือชื่อสินค้า..."
-          className="w-full rounded-xl border border-gray-300 bg-white px-5 py-4 text-lg outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+          disabled={!dataReady}
+          placeholder={
+            dataReady
+              ? "พิมพ์รหัสสินค้า เช่น WSB230B หรือชื่อสินค้า..."
+              : "กำลังโหลดข้อมูลสินค้า..."
+          }
+          className="w-full rounded-xl border border-gray-300 bg-white px-5 py-4 text-lg outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-gray-50"
         />
-        {loading && (
-          <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-            กำลังค้นหา...
-          </span>
-        )}
       </div>
 
-      {searched && (
+      {dataReady && (
         <p className="text-sm text-gray-500">
-          พบ {count.toLocaleString("th-TH")} รายการ
-          {count > results.length && ` (แสดง ${results.length} รายการแรก)`}
+          ฐานข้อมูล {allProducts.length.toLocaleString("th-TH")} รายการ
+          {searched &&
+            ` • พบ ${results.length.toLocaleString("th-TH")} รายการ${
+              results.length >= 50 ? " (แสดง 50 แรก)" : ""
+            }`}
         </p>
       )}
 
@@ -138,9 +136,9 @@ export function PriceLookup() {
         ))}
       </div>
 
-      {searched && results.length === 0 && !loading && (
+      {searched && results.length === 0 && (
         <div className="rounded-xl border border-dashed border-gray-300 py-16 text-center text-gray-400">
-          ไม่พบสินค้าที่ตรงกับ &ldquo;{query}&rdquo;
+          ไม่พบสินค้าที่ตรงกับ &ldquo;{debounced}&rdquo;
         </div>
       )}
     </div>

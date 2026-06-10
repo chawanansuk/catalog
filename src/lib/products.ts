@@ -9,10 +9,6 @@ export type WynnsProduct = {
   nameZh?: string | null;
   /** หน่วยนับ เช่น ด้าม, อัน */
   unit?: string | null;
-  /** ราคารวมภาษี (บาท) */
-  priceIncVat?: number | null;
-  /** ราคาส่งออก (บาท) */
-  priceExport?: number | null;
   /** ราคาทุน (เข้ารหัสไว้ — base64 ของ iv|ciphertext|tag; ถอดได้เฉพาะผู้มีรหัสผ่าน) */
   costEnc?: string | null;
   /** ราคาทุนที่ถอดรหัสแล้ว (เติมตอน runtime หลังผู้บริหารปลดล็อก เท่านั้น) */

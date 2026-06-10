@@ -63,6 +63,71 @@ function CostRow({
   );
 }
 
+/** % กำไรขั้นต้นบนราคาขาย = (ขาย - ทุน) / ขาย × 100 */
+function marginPct(sell: number, cost: number): number {
+  if (sell <= 0) return 0;
+  return Math.round(((sell - cost) / sell) * 100);
+}
+
+/** บรรทัดกำไร (เฉพาะโหมดผู้บริหารและรู้ราคาทุน) */
+function MarginRow({
+  cost,
+  product,
+}: {
+  cost: number;
+  product: WynnsProduct;
+}) {
+  const parts: string[] = [];
+  if (product.wholesale != null)
+    parts.push(`ส่ง ${marginPct(product.wholesale, cost)}%`);
+  if (product.retail != null)
+    parts.push(`ปลีก ${marginPct(product.retail, cost)}%`);
+  if (parts.length === 0) return null;
+  return (
+    <p className="sm:col-span-2 px-1 text-xs text-gray-500">
+      กำไรขั้นต้น — {parts.join(" · ")}
+    </p>
+  );
+}
+
+/** ปุ่มคัดลอกข้อมูลราคา (สำหรับส่งให้ลูกค้า/ทีม) */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          /* เบราว์เซอร์เก่าอาจไม่รองรับ */
+        }
+      }}
+      className="shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-500 transition hover:border-brand-500 hover:text-brand-600"
+    >
+      {copied ? "คัดลอกแล้ว ✓" : "คัดลอก"}
+    </button>
+  );
+}
+
+function buildCopyText(
+  product: WynnsProduct,
+  unlocked: boolean,
+  cost: number | null | undefined
+): string {
+  const lines: string[] = [];
+  lines.push(`${product.code ?? ""} ${product.name}`.trim());
+  if (unlocked && cost != null) lines.push(`ราคาทุน: ${formatBaht(cost)}`);
+  if (product.wholesaleSpecial != null)
+    lines.push(`ขายส่งพิเศษ: ${formatBaht(product.wholesaleSpecial)}`);
+  if (product.wholesale != null)
+    lines.push(`ขายส่ง: ${formatBaht(product.wholesale)}`);
+  if (product.retail != null)
+    lines.push(`ราคาปลีก: ${formatBaht(product.retail)}`);
+  return lines.join("\n");
+}
+
 function ProductResult({
   product,
   unlocked,
@@ -74,20 +139,23 @@ function ProductResult({
 }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2">
-        {product.code && (
-          <span className="rounded-md bg-brand-600 px-2 py-1 font-mono text-sm font-bold text-white">
-            {product.code}
-          </span>
-        )}
-        {product.isNew && (
-          <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-            สินค้าใหม่
-          </span>
-        )}
-        {product.unit && (
-          <span className="text-xs text-gray-400">/ {product.unit}</span>
-        )}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {product.code && (
+            <span className="rounded-md bg-brand-600 px-2 py-1 font-mono text-sm font-bold text-white">
+              {product.code}
+            </span>
+          )}
+          {product.isNew && (
+            <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+              สินค้าใหม่
+            </span>
+          )}
+          {product.unit && (
+            <span className="text-xs text-gray-400">/ {product.unit}</span>
+          )}
+        </div>
+        <CopyButton text={buildCopyText(product, unlocked, cost)} />
       </div>
 
       <h3 className="mt-2 font-medium text-gray-900">{product.name}</h3>
@@ -104,6 +172,9 @@ function ProductResult({
         <PriceRow label="ขายส่งพิเศษ" value={product.wholesaleSpecial} />
         <PriceRow label="ขายส่ง" value={product.wholesale} />
         <PriceRow label="ราคาขายปลีก" value={product.retail} />
+        {unlocked && cost != null && (
+          <MarginRow cost={cost} product={product} />
+        )}
       </div>
     </div>
   );

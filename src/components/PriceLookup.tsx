@@ -219,7 +219,7 @@ export function PriceLookup() {
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
     const v = process.env.NEXT_PUBLIC_DATA_VERSION ?? "";
-    fetch(`${base}/wynns.json?v=${v}`, { cache: "no-store" })
+    fetch(`${base}/wynns.json?v=${v}`)
       .then((res) => res.json())
       .then((data: WynnsProduct[]) => {
         setAllProducts(data);

@@ -27,9 +27,8 @@ function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
 export async function loadCostMeta(): Promise<CostCryptoMeta> {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const v = process.env.NEXT_PUBLIC_DATA_VERSION ?? "";
-  const res = await fetch(`${base}/cost-crypto.json?v=${v}`, {
-    cache: "no-store",
-  });
+  // ?v=<build> ทำให้ได้ไฟล์ใหม่ทุก deploy แต่ยัง cache ได้ในแต่ละเวอร์ชัน (โหลดเร็ว)
+  const res = await fetch(`${base}/cost-crypto.json?v=${v}`);
   return res.json();
 }
 

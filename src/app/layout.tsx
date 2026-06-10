@@ -1,10 +1,27 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title: "WYNNS — ค้นหาราคาสินค้า",
-  description: "ค้นหาราคาสินค้า WYNNS ด้วยรหัสสินค้า ดูราคาทุน ขายส่ง และขายพิเศษ",
+  title: "WYNN'S — ค้นหาราคาสินค้า",
+  description: "ค้นหาราคาสินค้า WYNNS ด้วยรหัสสินค้า ดูราคาขายส่ง และขายปลีก",
+  manifest: `${basePath}/manifest.webmanifest`,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "WYNN'S",
+  },
+  icons: {
+    icon: `${basePath}/icons/icon-192.png`,
+    apple: `${basePath}/icons/apple-touch-icon.png`,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1d6b41",
 };
 
 export default function RootLayout({
@@ -13,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className="min-h-screen">
+        <ServiceWorkerRegister />
         <header className="sticky top-0 z-10 bg-brand-600 shadow-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
             <Link href="/" className="flex items-center gap-3">

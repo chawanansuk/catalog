@@ -83,11 +83,16 @@ async function segment(src) {
       if (mb.length && bd[0] - mb[mb.length - 1][1] < 28 * f) mb[mb.length - 1][1] = bd[1];
       else mb.push([...bd]);
     }
-    if (mb.length <= 1) { boxes.push({ left: x0, top: 0, width: cw, height: H }); continue; }
+    if (mb.length === 0) continue;
     for (let i = 0; i < mb.length; i++) {
-      const T = Math.max(0, mb[i][0] - TITLE);
-      const B = i < mb.length - 1 ? Math.max(T + 1, mb[i + 1][0] - TITLE) : H;
-      boxes.push({ left: x0, top: T, width: cw, height: Math.min(H - T, B - T) });
+      const pTop = mb[i][0], pBot = mb[i][1];
+      // photo = แถบสี (ตัวสินค้า) เท่านั้น — ตัดหัวข้อ/บูลเลต/ตารางจีนออก
+      // ocr = พื้นที่ตั้งแต่ใต้รูปลงไปจนถึงรูปถัดไป (มีตาราง/รหัสของชิ้นนี้เอง)
+      const ocrBot = i < mb.length - 1 ? mb[i + 1][0] : H;
+      boxes.push({
+        photo: { left: x0, top: pTop, width: cw, height: pBot - pTop },
+        ocr: { left: x0, top: pBot, width: cw, height: Math.max(1, ocrBot - pBot) },
+      });
     }
   }
   return boxes;
@@ -96,20 +101,33 @@ async function segment(src) {
 for (let i = 0; i < pageFiles.length; i++) {
   const src = `${TMP}/${pageFiles[i]}`;
   const pageNo = String(i + 1).padStart(2, "0");
+  const { width: PW, height: PH } = await sharp(src).metadata();
+  const clamp = (b) => {
+    const left = Math.max(0, Math.min(b.left, PW - 1));
+    const top = Math.max(0, Math.min(b.top, PH - 1));
+    const width = Math.max(1, Math.min(b.width, PW - left));
+    const height = Math.max(1, Math.min(b.height, PH - top));
+    return { left, top, width, height };
+  };
   let bi = 0;
   const boxes = await segment(src);
   for (const box of boxes) {
     bi++;
     const name = `${PREFIX}p${pageNo}-b${String(bi).padStart(2, "0")}.jpg`;
-    const hiCrop = `${TMP}/crop.png`;
+    const photoFile = `${TMP}/photo.png`, ocrFile = `${TMP}/ocr.png`;
+    // รูป: ครอปเฉพาะแถบสี + trim ขอบขาว
+    const pbox = clamp(box.photo);
     try {
-      await sharp(src).extract(box).trim({ background: "#ffffff", threshold: 18 }).toFile(hiCrop);
-    } catch { await sharp(src).extract(box).toFile(hiCrop); }
-    await sharp(hiCrop).resize({ width: 480, withoutEnlargement: true })
-      .jpeg({ quality: 78 }).toFile(`${OUT_DIR}/${name}`);
+      await sharp(src).extract(pbox).trim({ background: "#ffffff", threshold: 18 }).toFile(photoFile);
+    } catch { await sharp(src).extract(pbox).toFile(photoFile); }
+    await sharp(photoFile).resize({ width: 480, withoutEnlargement: true })
+      .jpeg({ quality: 80 }).toFile(`${OUT_DIR}/${name}`);
     blockTotal++;
+    // OCR: หารหัสจากโซนใต้รูป (ถ้าไม่มีโซนใต้รูป ใช้ตัวรูปเอง)
+    const obox = clamp(box.ocr.height > 8 ? box.ocr : box.photo);
+    await sharp(src).extract(obox).toFile(ocrFile);
     let text = "";
-    try { text = execSync(`tesseract "${hiCrop}" stdout --psm 6 2>/dev/null`, { encoding: "utf8" }); } catch {}
+    try { text = execSync(`tesseract "${ocrFile}" stdout --psm 6 2>/dev/null`, { encoding: "utf8" }); } catch {}
     const found = new Set();
     for (const tok of text.toUpperCase().match(codePattern) || []) {
       const code = normMap.get(confuse(tok));

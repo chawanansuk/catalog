@@ -443,6 +443,7 @@ export function PriceLookup() {
             product={product}
             unlocked={unlocked}
             cost={product.costEnc ? costMap[product.costEnc] : null}
+            image={product.code ? catalogImages[product.code] : undefined}
           />
         ))}
       </div>

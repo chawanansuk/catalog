@@ -132,11 +132,14 @@ function ProductResult({
   product,
   unlocked,
   cost,
+  image,
 }: {
   product: WynnsProduct;
   unlocked: boolean;
   cost: number | null | undefined;
+  image?: string;
 }) {
+  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
@@ -161,6 +164,24 @@ function ProductResult({
       <h3 className="mt-2 font-medium text-gray-900">{product.name}</h3>
       {product.nameZh && (
         <p className="mt-0.5 text-xs text-gray-400">{product.nameZh}</p>
+      )}
+
+      {image && (
+        <a
+          href={`${base}/${image}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 block overflow-hidden rounded-lg border border-gray-100 bg-white"
+          title="แตะเพื่อดูภาพเต็มจากแคตตาล็อก"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${base}/${image}`}
+            alt={`รูปแคตตาล็อก ${product.code ?? ""}`}
+            loading="lazy"
+            className="mx-auto max-h-52 w-full object-contain"
+          />
+        </a>
       )}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -286,6 +307,9 @@ export function PriceLookup() {
   const metaRef = useRef<CostCryptoMeta | null>(null);
   const [costMap, setCostMap] = useState<Record<string, number | null>>({});
 
+  // map รหัส → รูปจากแคตตาล็อก
+  const [catalogImages, setCatalogImages] = useState<Record<string, string>>({});
+
   // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า แล้วค้นหาในเบราว์เซอร์ทั้งหมด (ไม่ต้องมีเซิร์ฟเวอร์)
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -297,6 +321,13 @@ export function PriceLookup() {
         setDataReady(true);
       })
       .catch(() => setDataReady(true));
+
+    fetch(`${base}/catalog-images.json?v=${v}`)
+      .then((res) => res.json())
+      .then((m: Record<string, string>) => setCatalogImages(m))
+      .catch(() => {
+        /* ไม่มีรูปก็ไม่เป็นไร */
+      });
   }, []);
 
   const getMeta = useCallback(async () => {

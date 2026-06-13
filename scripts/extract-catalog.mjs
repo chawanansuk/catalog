@@ -13,16 +13,17 @@
  */
 import sharp from "sharp";
 import { execSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync } from "node:fs";
 
 const PDF = process.argv[2];
-if (!PDF) { console.error("ใช้: node scripts/extract-catalog.mjs <catalog.pdf>"); process.exit(1); }
+if (!PDF) { console.error("ใช้: node scripts/extract-catalog.mjs <catalog.pdf> [prefix]"); process.exit(1); }
+const PREFIX = process.argv[3] || ""; // prefix ชื่อไฟล์ กันชนเวลารวมหลายเล่ม เช่น "v2-"
 
 const OUT_DIR = "public/catalog";
+const MAP_PATH = "public/catalog-images.json";
 const TMP = "/tmp/_catalog_extract";
-rmSync(OUT_DIR, { recursive: true, force: true });
 rmSync(TMP, { recursive: true, force: true });
-mkdirSync(OUT_DIR, { recursive: true });
+mkdirSync(OUT_DIR, { recursive: true }); // ไม่ลบของเดิม — รวมเข้าด้วยกัน
 mkdirSync(TMP, { recursive: true });
 
 // --- รหัสจริง + ตัว normalize แก้ความสับสนของ OCR ---
@@ -43,7 +44,7 @@ const pageFiles = readdirSync(TMP).filter((f) => f.endsWith(".png")).sort();
 console.log("จำนวนหน้า:", pageFiles.length);
 
 const codePattern = /[A-Z]{1,4}[0-9]{2,5}[A-Z0-9]{0,4}/g;
-const map = {};
+const map = existsSync(MAP_PATH) ? JSON.parse(readFileSync(MAP_PATH, "utf8")) : {};
 let blockTotal = 0, mappedCodes = 0;
 
 async function segment(src) {
@@ -99,7 +100,7 @@ for (let i = 0; i < pageFiles.length; i++) {
   const boxes = await segment(src);
   for (const box of boxes) {
     bi++;
-    const name = `p${pageNo}-b${String(bi).padStart(2, "0")}.jpg`;
+    const name = `${PREFIX}p${pageNo}-b${String(bi).padStart(2, "0")}.jpg`;
     const hiCrop = `${TMP}/crop.png`;
     try {
       await sharp(src).extract(box).trim({ background: "#ffffff", threshold: 18 }).toFile(hiCrop);
@@ -119,5 +120,5 @@ for (let i = 0; i < pageFiles.length; i++) {
   process.stdout.write(`\rหน้า ${i + 1}/${pageFiles.length} | บล็อก ${blockTotal} | จับคู่รหัส ${mappedCodes}   `);
 }
 console.log("");
-writeFileSync("public/catalog-images.json", JSON.stringify(map));
+writeFileSync(MAP_PATH, JSON.stringify(map));
 console.log(`เสร็จ: ${blockTotal} บล็อก, จับคู่ได้ ${mappedCodes} รหัส`);

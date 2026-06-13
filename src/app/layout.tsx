@@ -33,16 +33,15 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <header className="sticky top-0 z-10 bg-brand-600 shadow-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-            <Link href="/" className="flex items-center gap-3">
-              <span className="flex flex-col leading-none">
-                <span className="flex items-center text-3xl font-black italic tracking-tighter text-white">
-                  WY
-                  <span className="mx-[1px] inline-block h-0 w-0 -skew-x-12 border-y-[11px] border-l-[14px] border-y-transparent border-l-accent-500 align-middle" />
-                  NN&apos;S
-                </span>
-                <span className="mt-1 text-[9px] font-semibold tracking-[0.3em] text-brand-100">
-                  WYNNS TOOLS · 威力狮
-                </span>
+            <Link href="/" className="flex items-center">
+              {/* โลโก้ WYNN'S จริง (ดึงจากแคตตาล็อก) วางในกล่องขาวบนแถบเขียว */}
+              <span className="rounded-md bg-white px-3 py-1.5 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`${basePath}/wynns-logo.png`}
+                  alt="WYNN'S — 威力狮"
+                  className="h-7 w-auto"
+                />
               </span>
             </Link>
             <nav className="flex gap-6 text-sm font-medium text-brand-100">

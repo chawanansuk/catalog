@@ -133,11 +133,13 @@ function ProductResult({
   unlocked,
   cost,
   image,
+  info,
 }: {
   product: WynnsProduct;
   unlocked: boolean;
   cost: number | null | undefined;
   image?: string;
+  info?: { features?: string[]; material?: string; hardness?: string };
 }) {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   return (
@@ -182,6 +184,22 @@ function ProductResult({
             className="mx-auto max-h-52 w-full object-contain"
           />
         </a>
+      )}
+
+      {info?.features && info.features.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {info.features.map((f, i) => (
+            <li key={i} className="flex gap-1.5 text-xs text-gray-600">
+              <span className="text-brand-500">•</span>
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {(info?.material || info?.hardness) && (
+        <p className="mt-1.5 text-xs text-gray-400">
+          {[info.material, info.hardness].filter(Boolean).join(" · ")}
+        </p>
       )}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -309,6 +327,10 @@ export function PriceLookup() {
 
   // map รหัส → รูปจากแคตตาล็อก
   const [catalogImages, setCatalogImages] = useState<Record<string, string>>({});
+  // map รหัส → ข้อมูลไทย (จุดเด่น/วัสดุ) จาก vision
+  const [catalogInfo, setCatalogInfo] = useState<
+    Record<string, { features?: string[]; material?: string; hardness?: string }>
+  >({});
 
   // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า แล้วค้นหาในเบราว์เซอร์ทั้งหมด (ไม่ต้องมีเซิร์ฟเวอร์)
   useEffect(() => {
@@ -327,6 +349,13 @@ export function PriceLookup() {
       .then((m: Record<string, string>) => setCatalogImages(m))
       .catch(() => {
         /* ไม่มีรูปก็ไม่เป็นไร */
+      });
+
+    fetch(`${base}/catalog-info.json?v=${v}`)
+      .then((res) => res.json())
+      .then((m) => setCatalogInfo(m))
+      .catch(() => {
+        /* ไม่มีข้อมูลเสริมก็ไม่เป็นไร */
       });
   }, []);
 
@@ -444,6 +473,7 @@ export function PriceLookup() {
             unlocked={unlocked}
             cost={product.costEnc ? costMap[product.costEnc] : null}
             image={product.code ? catalogImages[product.code] : undefined}
+            info={product.code ? catalogInfo[product.code] : undefined}
           />
         ))}
       </div>

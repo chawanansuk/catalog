@@ -459,9 +459,9 @@ export function PriceLookup() {
         <p className="text-sm text-gray-500">
           ฐานข้อมูล {allProducts.length.toLocaleString("th-TH")} รายการ
           {searched &&
-            ` • พบ ${results.length.toLocaleString("th-TH")} รายการ${
-              results.length >= 50 ? " (แสดง 50 แรก)" : ""
-            }`}
+            (results.length >= 50
+              ? ` • พบมากกว่า 50 รายการ — แสดง 50 แรก (พิมพ์ให้เจาะจงขึ้น)`
+              : ` • พบ ${results.length.toLocaleString("th-TH")} รายการ`)}
         </p>
       )}
 

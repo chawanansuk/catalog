@@ -114,10 +114,12 @@ function CopyButton({ text }: { text: string }) {
 function buildCopyText(
   product: WynnsProduct,
   unlocked: boolean,
-  cost: number | null | undefined
+  cost: number | null | undefined,
+  currentPrice?: number
 ): string {
   const lines: string[] = [];
   lines.push(`${product.code ?? ""} ${product.name}`.trim());
+  if (currentPrice != null) lines.push(`ราคาตอนนี้: ${formatBaht(currentPrice)}`);
   if (unlocked && cost != null) lines.push(`ราคาทุน: ${formatBaht(cost)}`);
   if (product.wholesale != null)
     lines.push(`ขายส่ง: ${formatBaht(product.wholesale)}`);
@@ -132,12 +134,14 @@ function ProductResult({
   cost,
   image,
   info,
+  currentPrice,
 }: {
   product: WynnsProduct;
   unlocked: boolean;
   cost: number | null | undefined;
   image?: string;
   info?: { features?: string[]; material?: string; hardness?: string };
+  currentPrice?: number;
 }) {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   return (
@@ -158,7 +162,9 @@ function ProductResult({
             <span className="text-xs text-gray-400">/ {product.unit}</span>
           )}
         </div>
-        <CopyButton text={buildCopyText(product, unlocked, cost)} />
+        <CopyButton
+          text={buildCopyText(product, unlocked, cost, currentPrice)}
+        />
       </div>
 
       <h3 className="mt-2 font-medium text-gray-900">{product.name}</h3>
@@ -198,6 +204,15 @@ function ProductResult({
         <p className="mt-1.5 text-xs text-gray-400">
           {[info.material, info.hardness].filter(Boolean).join(" · ")}
         </p>
+      )}
+
+      {currentPrice != null && (
+        <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2.5 ring-1 ring-amber-200">
+          <span className="text-sm font-medium text-amber-800">ราคาตอนนี้</span>
+          <span className="text-lg font-bold text-amber-900">
+            {formatBaht(currentPrice)}
+          </span>
+        </div>
       )}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -328,6 +343,8 @@ export function PriceLookup() {
   const [catalogInfo, setCatalogInfo] = useState<
     Record<string, { features?: string[]; material?: string; hardness?: string }>
   >({});
+  // map รหัส → ราคาขายตอนนี้ (แก้ไขได้ผ่านไฟล์ current-prices.json)
+  const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
 
   // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า แล้วค้นหาในเบราว์เซอร์ทั้งหมด (ไม่ต้องมีเซิร์ฟเวอร์)
   useEffect(() => {
@@ -353,6 +370,13 @@ export function PriceLookup() {
       .then((m) => setCatalogInfo(m))
       .catch(() => {
         /* ไม่มีข้อมูลเสริมก็ไม่เป็นไร */
+      });
+
+    fetch(`${base}/current-prices.json?v=${v}`)
+      .then((res) => res.json())
+      .then((m: Record<string, number>) => setCurrentPrices(m))
+      .catch(() => {
+        /* ไม่มีราคาตอนนี้ก็ไม่เป็นไร */
       });
   }, []);
 
@@ -471,6 +495,9 @@ export function PriceLookup() {
             cost={product.costEnc ? costMap[product.costEnc] : null}
             image={product.code ? catalogImages[product.code] : undefined}
             info={product.code ? catalogInfo[product.code] : undefined}
+            currentPrice={
+              product.code ? currentPrices[product.code] : undefined
+            }
           />
         ))}
       </div>

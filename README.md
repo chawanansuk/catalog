@@ -81,6 +81,16 @@ git add -A && git commit -m "update prices" && git push   # (push เข้า m
 
 > ราคารวมภาษี/ราคาส่งออก ไม่ถูกเก็บลงไฟล์ (เว็บไม่แสดง) เพื่อลดขนาด
 
+## อัปเดต "ราคาตอนนี้" (ราคาขายปัจจุบัน)
+
+ราคาตอนนี้แสดงเป็นบรรทัดเด่นบนการ์ด มาจาก `public/current-prices.json`
+แก้ไขได้โดยอัปเดตไฟล์ Word (ตาราง 3 คอลัมน์: รหัส | ชื่อ | ราคา) แล้วรัน:
+
+```bash
+python3 scripts/import-current-prices.py path/to/prices.docx
+git add -A && git commit -m "update current prices" && git push
+```
+
 ## โหมดผู้บริหาร — ราคาทุน (เข้ารหัส)
 
 ราคาทุน (`cost`) ถูก **เข้ารหัส AES-256-GCM** เก็บไว้ใน `public/wynns.json`

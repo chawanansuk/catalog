@@ -12,7 +12,7 @@ export default function HomePage() {
             ค้นหาราคาสินค้า WYNNS
           </h1>
           <p className="mt-2 max-w-xl text-brand-50">
-            พิมพ์รหัสสินค้าเพื่อดูราคาขายส่ง ขายส่งพิเศษ และราคาปลีก ทันที
+            พิมพ์รหัสสินค้าเพื่อดูราคาขายส่ง และราคาปลีก ทันที
           </p>
         </div>
       </section>

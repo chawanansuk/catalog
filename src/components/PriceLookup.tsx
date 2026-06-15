@@ -119,8 +119,6 @@ function buildCopyText(
   const lines: string[] = [];
   lines.push(`${product.code ?? ""} ${product.name}`.trim());
   if (unlocked && cost != null) lines.push(`ราคาทุน: ${formatBaht(cost)}`);
-  if (product.wholesaleSpecial != null)
-    lines.push(`ขายส่งพิเศษ: ${formatBaht(product.wholesaleSpecial)}`);
   if (product.wholesale != null)
     lines.push(`ขายส่ง: ${formatBaht(product.wholesale)}`);
   if (product.retail != null)
@@ -208,7 +206,6 @@ function ProductResult({
           cost={cost}
           hasCost={product.costEnc != null}
         />
-        <PriceRow label="ขายส่งพิเศษ" value={product.wholesaleSpecial} />
         <PriceRow label="ขายส่ง" value={product.wholesale} />
         <PriceRow label="ราคาขายปลีก" value={product.retail} />
         {unlocked && cost != null && (

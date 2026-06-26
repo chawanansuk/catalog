@@ -73,14 +73,18 @@ function marginPct(sell: number, cost: number): number {
 function MarginRow({
   cost,
   product,
+  currentPrice,
 }: {
   cost: number;
   product: WynnsProduct;
+  currentPrice?: number;
 }) {
   const parts: string[] = [];
+  if (currentPrice != null)
+    parts.push(`ตอนนี้ ${marginPct(currentPrice, cost)}%`);
   if (product.wholesale != null)
     parts.push(`ส่ง ${marginPct(product.wholesale, cost)}%`);
-  if (product.retail != null)
+  if (currentPrice == null && product.retail != null)
     parts.push(`ปลีก ${marginPct(product.retail, cost)}%`);
   if (parts.length === 0) return null;
   return (
@@ -209,8 +213,15 @@ function ProductResult({
       {currentPrice != null && (
         <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2.5 ring-1 ring-amber-200">
           <span className="text-sm font-medium text-amber-800">ราคาตอนนี้</span>
-          <span className="text-lg font-bold text-amber-900">
-            {formatBaht(currentPrice)}
+          <span className="flex items-baseline gap-2">
+            {product.retail != null && product.retail > currentPrice && (
+              <span className="text-sm text-gray-400 line-through">
+                {formatBaht(product.retail)}
+              </span>
+            )}
+            <span className="text-lg font-bold text-amber-900">
+              {formatBaht(currentPrice)}
+            </span>
           </span>
         </div>
       )}
@@ -222,9 +233,12 @@ function ProductResult({
           hasCost={product.costEnc != null}
         />
         <PriceRow label="ขายส่ง" value={product.wholesale} />
-        <PriceRow label="ราคาขายปลีก" value={product.retail} />
+        {/* ซ่อนราคาปลีกเดิมเมื่อมีราคาตอนนี้ (กันสับสน) */}
+        {currentPrice == null && (
+          <PriceRow label="ราคาขายปลีก" value={product.retail} />
+        )}
         {unlocked && cost != null && (
-          <MarginRow cost={cost} product={product} />
+          <MarginRow cost={cost} product={product} currentPrice={currentPrice} />
         )}
       </div>
     </div>
@@ -470,8 +484,18 @@ export function PriceLookup() {
               ? "พิมพ์รหัสสินค้า เช่น WSB230B หรือชื่อสินค้า..."
               : "กำลังโหลดข้อมูลสินค้า..."
           }
-          className="w-full rounded-xl border border-gray-300 bg-white px-5 py-4 text-lg outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-gray-50"
+          className="w-full rounded-xl border border-gray-300 bg-white px-5 py-4 pr-12 text-lg outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-gray-50"
         />
+        {query && (
+          <button
+            type="button"
+            aria-label="ล้างคำค้นหา"
+            onClick={() => setQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       <ExecUnlock unlocked={unlocked} onUnlock={unlock} onLogout={logout} />

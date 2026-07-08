@@ -30,3 +30,6 @@ next-env.d.ts
 
 # vision pipeline intermediate output
 /pipeline/out/
+
+# รายงานแถวราคาที่จับคู่รหัสไม่ได้ (สร้างโดย import-current-prices.py)
+/unmatched-current-prices.txt

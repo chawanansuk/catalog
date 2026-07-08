@@ -10,8 +10,11 @@ import {
   verifyKey,
   type CostCryptoMeta,
 } from "@/lib/cost-crypto";
+import { CATEGORIES, categorize } from "@/lib/categories";
+import { QuoteCart, type CartItem } from "@/components/QuoteCart";
 
 const SESSION_KEY = "wynns_cost_pp";
+const CART_KEY = "wynns_quote_cart";
 
 function PriceRow({
   label,
@@ -139,6 +142,8 @@ function ProductResult({
   image,
   info,
   currentPrice,
+  inCart,
+  onAddToCart,
 }: {
   product: WynnsProduct;
   unlocked: boolean;
@@ -146,6 +151,8 @@ function ProductResult({
   image?: string;
   info?: { features?: string[]; material?: string; hardness?: string };
   currentPrice?: number;
+  inCart: boolean;
+  onAddToCart: () => void;
 }) {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   return (
@@ -166,9 +173,20 @@ function ProductResult({
             <span className="text-xs text-gray-400">/ {product.unit}</span>
           )}
         </div>
-        <CopyButton
-          text={buildCopyText(product, unlocked, cost, currentPrice)}
-        />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <CopyButton
+            text={buildCopyText(product, unlocked, cost, currentPrice)}
+          />
+          {product.code && (
+            <button
+              onClick={onAddToCart}
+              disabled={inCart}
+              className="rounded-md border border-brand-200 bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 transition hover:bg-brand-100 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-400"
+            >
+              {inCart ? "อยู่ในใบเสนอ ✓" : "＋ เสนอราคา"}
+            </button>
+          )}
+        </div>
       </div>
 
       <h3 className="mt-2 font-medium text-gray-900">{product.name}</h3>
@@ -189,7 +207,7 @@ function ProductResult({
             src={`${base}/${image}`}
             alt={`รูปแคตตาล็อก ${product.code ?? ""}`}
             loading="lazy"
-            className="mx-auto max-h-52 w-full object-contain"
+            className="mx-auto max-h-44 w-auto max-w-full object-contain p-1"
           />
         </a>
       )}
@@ -360,6 +378,35 @@ export function PriceLookup() {
   // map รหัส → ราคาขายตอนนี้ (แก้ไขได้ผ่านไฟล์ current-prices.json)
   const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
 
+  // หมวดหมู่ที่เลือก (null = ทั้งหมด)
+  const [category, setCategory] = useState<string | null>(null);
+
+  // ตะกร้าใบเสนอราคา (เก็บใน localStorage ให้อยู่ข้ามการเปิด-ปิด)
+  const [cart, setCart] = useState<CartItem[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    // โหลดหลัง hydrate (หลีกเลี่ยง setState ระหว่าง effect ทำงาน)
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      try {
+        const saved = localStorage.getItem(CART_KEY);
+        if (saved) setCart(JSON.parse(saved));
+      } catch {
+        /* ข้อมูลเสียก็เริ่มใหม่ */
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch {
+      /* เต็มก็ข้าม */
+    }
+  }, [cart]);
+
   // โหลดข้อมูลครั้งเดียวตอนเปิดหน้า แล้วค้นหาในเบราว์เซอร์ทั้งหมด (ไม่ต้องมีเซิร์ฟเวอร์)
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -435,10 +482,36 @@ export function PriceLookup() {
     };
   }, [query]);
 
-  const results = useMemo(
-    () => searchProducts(debounced, allProducts),
-    [debounced, allProducts]
+  // แคชหมวดของแต่ละสินค้า (คำนวณครั้งเดียว)
+  const productCats = useMemo(() => {
+    const m = new Map<WynnsProduct, string>();
+    for (const p of allProducts) m.set(p, categorize(p.name));
+    return m;
+  }, [allProducts]);
+
+  // จำนวนสินค้าต่อหมวด (โชว์บน chip)
+  const catCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const v of productCats.values()) c[v] = (c[v] ?? 0) + 1;
+    return c;
+  }, [productCats]);
+
+  // กรองตามหมวดก่อน แล้วค่อยค้นหาในหมวดนั้น
+  const pool = useMemo(
+    () =>
+      category
+        ? allProducts.filter((p) => productCats.get(p) === category)
+        : allProducts,
+    [category, allProducts, productCats]
   );
+
+  const searched = debounced.trim().length > 0;
+
+  const results = useMemo(() => {
+    if (searched) return searchProducts(debounced, pool);
+    if (category) return pool.slice(0, 50);
+    return [];
+  }, [debounced, pool, category, searched]);
 
   // ถอดรหัสราคาทุนของผลลัพธ์ที่ยังไม่ได้ถอด (เมื่ออยู่ในโหมดผู้บริหาร)
   useEffect(() => {
@@ -467,8 +540,26 @@ export function PriceLookup() {
     };
   }, [cryptoKey, results, costMap]);
 
-  const searched = debounced.trim().length > 0;
   const unlocked = cryptoKey != null;
+
+  const addToCart = useCallback(
+    (p: WynnsProduct) => {
+      if (!p.code) return;
+      const code = p.code;
+      const price =
+        currentPrices[code] ?? p.retail ?? p.wholesale ?? 0;
+      setCart((prev) =>
+        prev.some((it) => it.code === code)
+          ? prev
+          : [
+              ...prev,
+              { code, name: p.name, unit: p.unit ?? undefined, price, qty: 1 },
+            ]
+      );
+    },
+    [currentPrices]
+  );
+  const cartCodes = useMemo(() => new Set(cart.map((it) => it.code)), [cart]);
 
   return (
     <div className="space-y-5">
@@ -498,15 +589,46 @@ export function PriceLookup() {
         )}
       </div>
 
+      {/* แถบหมวดหมู่ — ปัดดูได้บนมือถือ */}
+      {dataReady && (
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {CATEGORIES.filter((c) => (catCounts[c.key] ?? 0) > 0).map((c) => (
+            <button
+              key={c.key}
+              onClick={() =>
+                setCategory((prev) => (prev === c.key ? null : c.key))
+              }
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-sm transition ${
+                category === c.key
+                  ? "border-brand-600 bg-brand-600 font-medium text-white"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-brand-300"
+              }`}
+            >
+              {c.icon} {c.label}
+              <span
+                className={`ml-1 text-xs ${
+                  category === c.key ? "text-brand-100" : "text-gray-400"
+                }`}
+              >
+                {catCounts[c.key]}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <ExecUnlock unlocked={unlocked} onUnlock={unlock} onLogout={logout} />
 
       {dataReady && (
         <p className="text-sm text-gray-500">
-          ฐานข้อมูล {allProducts.length.toLocaleString("th-TH")} รายการ
+          {category
+            ? `หมวด ${CATEGORIES.find((c) => c.key === category)?.label} ${pool.length.toLocaleString("th-TH")} รายการ`
+            : `ฐานข้อมูล ${allProducts.length.toLocaleString("th-TH")} รายการ`}
           {searched &&
             (results.length >= 50
               ? ` • พบมากกว่า 50 รายการ — แสดง 50 แรก (พิมพ์ให้เจาะจงขึ้น)`
               : ` • พบ ${results.length.toLocaleString("th-TH")} รายการ`)}
+          {!searched && category && pool.length > 50 && ` • แสดง 50 แรก`}
         </p>
       )}
 
@@ -522,6 +644,8 @@ export function PriceLookup() {
             currentPrice={
               product.code ? currentPrices[product.code] : undefined
             }
+            inCart={product.code ? cartCodes.has(product.code) : false}
+            onAddToCart={() => addToCart(product)}
           />
         ))}
       </div>
@@ -529,8 +653,40 @@ export function PriceLookup() {
       {searched && results.length === 0 && (
         <div className="rounded-xl border border-dashed border-gray-300 py-16 text-center text-gray-400">
           ไม่พบสินค้าที่ตรงกับ &ldquo;{debounced}&rdquo;
+          {category && (
+            <p className="mt-2 text-sm">
+              (กำลังค้นเฉพาะหมวดที่เลือก —{" "}
+              <button
+                onClick={() => setCategory(null)}
+                className="text-brand-600 underline"
+              >
+                ค้นทุกหมวด
+              </button>
+              )
+            </p>
+          )}
         </div>
       )}
+
+      <QuoteCart
+        items={cart}
+        onChangeQty={(code, qty) =>
+          setCart((prev) =>
+            qty <= 0
+              ? prev.filter((it) => it.code !== code)
+              : prev.map((it) => (it.code === code ? { ...it, qty } : it))
+          )
+        }
+        onChangePrice={(code, price) =>
+          setCart((prev) =>
+            prev.map((it) => (it.code === code ? { ...it, price } : it))
+          )
+        }
+        onRemove={(code) =>
+          setCart((prev) => prev.filter((it) => it.code !== code))
+        }
+        onClear={() => setCart([])}
+      />
     </div>
   );
 }

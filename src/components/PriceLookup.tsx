@@ -199,7 +199,7 @@ function ProductResult({
           href={`${base}/${image}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 block overflow-hidden rounded-lg border border-gray-100 bg-white"
+          className="mt-3 flex h-40 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white p-2"
           title="แตะเพื่อดูภาพเต็มจากแคตตาล็อก"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -207,7 +207,8 @@ function ProductResult({
             src={`${base}/${image}`}
             alt={`รูปแคตตาล็อก ${product.code ?? ""}`}
             loading="lazy"
-            className="mx-auto max-h-44 w-auto max-w-full object-contain p-1"
+            /* max-* เท่านั้น — รูปเล็กแสดงขนาดจริง ไม่ถูกยืดจนเบลอ */
+            className="max-h-full max-w-full object-contain"
           />
         </a>
       )}
@@ -244,21 +245,34 @@ function ProductResult({
         </div>
       )}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <CostRow
-          unlocked={unlocked}
-          cost={cost}
-          hasCost={product.costEnc != null}
-        />
-        <PriceRow label="ขายส่ง" value={product.wholesale} />
-        {/* ซ่อนราคาปลีกเดิมเมื่อมีราคาตอนนี้ (กันสับสน) */}
-        {currentPrice == null && (
-          <PriceRow label="ราคาขายปลีก" value={product.retail} />
-        )}
-        {unlocked && cost != null && (
-          <MarginRow cost={cost} product={product} currentPrice={currentPrice} />
-        )}
-      </div>
+      {/* สินค้าที่ยังไม่มีราคาในระบบเลย — บอกให้ชัดแทนการ์ดโล่ง */}
+      {currentPrice == null &&
+      product.wholesale == null &&
+      product.retail == null ? (
+        <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2.5 text-center text-sm text-gray-500">
+          ยังไม่มีราคาในระบบ — ติดต่อสอบถามราคา
+        </p>
+      ) : (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <CostRow
+            unlocked={unlocked}
+            cost={cost}
+            hasCost={product.costEnc != null}
+          />
+          <PriceRow label="ขายส่ง" value={product.wholesale} />
+          {/* ซ่อนราคาปลีกเดิมเมื่อมีราคาตอนนี้ (กันสับสน) */}
+          {currentPrice == null && (
+            <PriceRow label="ราคาขายปลีก" value={product.retail} />
+          )}
+          {unlocked && cost != null && (
+            <MarginRow
+              cost={cost}
+              product={product}
+              currentPrice={currentPrice}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -496,6 +510,18 @@ export function PriceLookup() {
     return c;
   }, [productCats]);
 
+  // เรียง chip ตามจำนวนสินค้า (มากไปน้อย) — หมวดใหญ่อยู่ต้นแถบ หาง่ายกว่า
+  // ยกเว้น "อื่นๆ" ที่เป็นถังรวม ให้อยู่ท้ายสุดเสมอ
+  const sortedCategories = useMemo(
+    () =>
+      CATEGORIES.filter((c) => (catCounts[c.key] ?? 0) > 0).sort((a, b) => {
+        if (a.key === "other") return 1;
+        if (b.key === "other") return -1;
+        return (catCounts[b.key] ?? 0) - (catCounts[a.key] ?? 0);
+      }),
+    [catCounts]
+  );
+
   // กรองตามหมวดก่อน แล้วค่อยค้นหาในหมวดนั้น
   const pool = useMemo(
     () =>
@@ -592,7 +618,7 @@ export function PriceLookup() {
       {/* แถบหมวดหมู่ — ปัดดูได้บนมือถือ */}
       {dataReady && (
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {CATEGORIES.filter((c) => (catCounts[c.key] ?? 0) > 0).map((c) => (
+          {sortedCategories.map((c) => (
             <button
               key={c.key}
               onClick={() =>
